@@ -33,8 +33,8 @@ int main(int argc, char *argv[]) {
 
     // Task tracking array
     int *tasks_per_worker = malloc(num_workers * sizeof(int));
-    if (workers == NULL) {
-        perror("malloc workers");
+    if (tasks_per_worker == NULL) {
+        perror("malloc tasks");
         exit(1);
     }
 
@@ -63,12 +63,15 @@ int main(int argc, char *argv[]) {
         for(int i = 0; i < num_workers; i++) {
 
             if(tasks_per_worker[i] > 0) {
+
                 WordCount temp_results[MAX_RESULTS];
                 int temp_size = 0;
 
-                send_task(workers[i].to_worker[1], argv[next_file + 2]);
-                tasks_per_worker[i]++;
-                next_file++;
+                receive_results(workers[i].from_worker[0], temp_results, &temp_size);
+                merge_results(final_results, temp_results, &final_size, temp_size);
+
+                tasks_per_worker[i]--;
+                completed++;
 
                 //assign new task if available
                 if (next_file < num_files) {
@@ -82,7 +85,7 @@ int main(int argc, char *argv[]) {
 
     //terminate workers
     for (int i = 0; i < num_workers; i++) {
-        send_terminate(workers[i])
+        send_terminate(workers[i].to_worker[1]);
     }
 
     //Output results
